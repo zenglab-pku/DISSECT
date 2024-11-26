@@ -1,7 +1,7 @@
 <table style="border: 1px solid white; border-collapse: collapse; background-color: transparent;">
 <tr style="border: 1px solid white;">
 <td style="width: 30%; border: 1px solid white; padding: 0;">
-<img src="logo.png" alt="DISSECT Logo" style="width: 600px;">
+<img src="logo.png" alt="DISSECT Logo" style="width: 700px;">
 </td>
 <td style="text-align: left; vertical-align: 1px solid white: none; padding: 0;">
 <h1>DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics</h1>
