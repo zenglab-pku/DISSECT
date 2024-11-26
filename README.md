@@ -1,11 +1,11 @@
 <table style="border: 1px solid white; border-collapse: collapse; background-color: transparent;">
 <tr style="border: 1px solid white;">
-<td style="width: 30%; border: 1px solid white; padding: 0;">
-<img src="logo.png" alt="DISSECT Logo" style="width: 700px;">
-</td>
 <td style="text-align: left; vertical-align: 1px solid white: none; padding: 0;">
 <h1>DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics</h1>
 <p><strong>DISSECT</strong> (<strong>DIffusion-based cell Segmentation integrating Spatially rEsolved transCripTome</strong>) is an advanced cell segmentation algorithm developed by the Zeng Lab. It combines cytological image segmentation with transcriptome-guided fine-tuning to achieve precise spatial transcriptome reconstruction.</p>
+</td>
+<td style="width: 30%; border: 1px solid white; padding: 0;">
+<img src="logo.png" alt="DISSECT Logo" style="width: 700px;">
 </td>
 </tr>
 </table>
