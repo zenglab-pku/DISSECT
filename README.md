@@ -1,7 +1,7 @@
 <table>
 <tr>
 <td style="width: 30%;">
-<img src="logo.png" alt="DISSECT Logo" style="width: 400px;">
+<img src="logo.png" alt="DISSECT Logo" style="width: 500px;">
 </td>
 <td style="text-align: left; vertical-align: middle;">
 <h1>DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics</h1>
