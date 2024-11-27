@@ -74,7 +74,7 @@ mask = DISSECT.segmentation(
     gene_mtx_filename="example_stereoseq.gem",
     config_file="config.yaml",
     weights_file="model_weights.pth"
-)```
+)
 
 ### Parameters:
 - **`img_path`**: Path to the cytological image file.  
