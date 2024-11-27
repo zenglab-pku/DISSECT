@@ -120,7 +120,6 @@ class ModelGenerator:
         add_model_ema_configs(cfg)
         cfg.merge_from_file(config_file)
         cfg.MODEL.DEVICE = "cpu"
-        cfg.MODEL.DISSECT.NUM_PROPOSALs = num_proposals
         cfg.freeze()
         return cfg
 
