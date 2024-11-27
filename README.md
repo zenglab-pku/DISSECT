@@ -1,16 +1,10 @@
-<table style="border: 1px solid white; border-collapse: collapse; background-color: transparent;">
-<tr style="border: 1px solid white;">
-<td style="text-align: left; vertical-align: 1px solid white: none; padding: 0;">
-<h1>DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics</h1>
-<p><strong>DISSECT</strong> (<strong>DIffusion-based cell Segmentation integrating Spatially rEsolved transCripTome</strong>) is an advanced cell segmentation algorithm developed by the Zeng Lab. It combines cytological image segmentation with transcriptome-guided fine-tuning to achieve precise spatial transcriptome reconstruction.</p>
-</td>
-<td style="width: 30%; border: 1px solid white; padding: 0;">
-<img src="logo.png" alt="DISSECT Logo" style="width: 700px;">
-</td>
-</tr>
-</table>
+# DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics
+
+**DISSECT** (**DIffusion-based cell Segmentation integrating Spatially rEsolved transCripTome**) is an advanced cell segmentation algorithm developed by the Zeng Lab. It combines cytological image segmentation with transcriptome-guided fine-tuning to achieve precise spatial transcriptome reconstruction.
 
 DISSECT leverages a pre-trained deep generative model to identify cell nuclei or membrane boundaries. By unifying the gradient fields of cytological images and transcriptomics data, it refines cell boundaries and reconstructs spatial single-cell transcriptomes.
+
+<img align="right" src="logo.png"/>
 
 ---
 
@@ -39,7 +33,7 @@ Below are the essential libraries required to use DISSECT:
   - `detectron2`
   - `joblib`
 
-For full dependencies, refer to the `requirements.txt` file.
+For full dependencies, refer to the `environment.yml` file.
 
 ---
 
