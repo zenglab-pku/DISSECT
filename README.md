@@ -1,8 +1,8 @@
 # DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics
 
-**DISSECT** (**DIffusion-based cell Segmentation integrating Spatially rEsolved transCripTome**) is an advanced cell segmentation algorithm developed by the Zeng Lab. It combines cytological image segmentation with transcriptome-guided fine-tuning to achieve precise spatial transcriptome reconstruction.
-
 <img align="right" src="logo.png" width="200"/>
+
+**DISSECT** (**DIffusion-based cell Segmentation integrating Spatially rEsolved transCripTome**) is an advanced cell segmentation algorithm developed by the Zeng Lab. It combines cytological image segmentation with transcriptome-guided fine-tuning to achieve precise spatial transcriptome reconstruction.
 
 DISSECT leverages a pre-trained deep generative model to identify cell nuclei or membrane boundaries. By unifying the gradient fields of cytological images and transcriptomics data, it refines cell boundaries and reconstructs spatial single-cell transcriptomes.
 
