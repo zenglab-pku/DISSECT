@@ -4,7 +4,7 @@
 
 DISSECT leverages a pre-trained deep generative model to identify cell nuclei or membrane boundaries. By unifying the gradient fields of cytological images and transcriptomics data, it refines cell boundaries and reconstructs spatial single-cell transcriptomes.
 
-<img align="right" src="logo.png"/>
+<img align="right" src="logo.png" width="200"/>
 
 ---
 
