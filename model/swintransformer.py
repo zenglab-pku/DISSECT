@@ -9,10 +9,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 import numpy as np
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+
+try:
+    from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+except:
+    from timm.layers import DropPath, to_2tuple, trunc_normal_
 
 import fvcore.nn.weight_init as weight_init
-
 from detectron2.layers import ShapeSpec
 from detectron2.modeling.backbone.backbone import Backbone
 from detectron2.modeling.backbone.build import BACKBONE_REGISTRY
