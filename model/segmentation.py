@@ -18,6 +18,8 @@ import tifffile as tiff
 from .anchor import set_seed, ModelGenerator, RegionExtractor, AnchorGenerator
 from .finetune import gradient_map, create_kernel, refine_mask_parallel
 
+os.environ["IOPATH_DISABLE_TELEMETRY"] = "1"
+
 def parallel_gm(img_cell, cell_box, index, gene_mtx, kernel, alpha, expand_by, gene):
     non_zero_positions = gradient_map(img_cell=img_cell, cell_box=cell_box, index=index, gene_mtx=gene_mtx, kernel=kernel, alpha=alpha, expand_by=expand_by, gene=gene)
     return non_zero_positions
