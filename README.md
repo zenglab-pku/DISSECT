@@ -9,7 +9,6 @@ DISSECT leverages a pre-trained deep generative model to identify cell nuclei or
 ---
 
 ## Key Features
-<img align="right" src="logo.png" width="200"/>
 - Integration of **deep generative models** for segmentation.
 - Combines **spatial transcriptomic data** with image analysis for enhanced accuracy.
 - Supports transcriptomics data from multiple platforms:
@@ -17,7 +16,8 @@ DISSECT leverages a pre-trained deep generative model to identify cell nuclei or
   - **BGI Stereo-seq**
   - **Nanostring CosMx**
 - Outputs include refined cell masks, bounding boxes, and spatial transcriptomes for downstream analyses.
-
+<img src="illustration_diffusion.png" width="200"/>
+<img src="illustration_segmentation.png" width="200"/>
 ---
 
 ## Dependencies
