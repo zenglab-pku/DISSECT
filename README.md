@@ -75,8 +75,7 @@ mask = DISSECT.segmentation(
     config_file="config.yaml",
     weights_file="model_weights.pth"
 )
-
-````markdown
+```
 
 ### Parameters:
 - **`img_path`**: Path to the cytological image file.  
