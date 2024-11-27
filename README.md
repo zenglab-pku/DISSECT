@@ -85,7 +85,7 @@ mask = DISSECT.segmentation(
   - `"stereoseq"`
   - `"nanostring"`
 - **`config_file`**: Path to an optional YAML file for model configuration parameters.  
-- **`weights_file`**: Path to the pre-trained model weights file (download available [here](#)).
+- **`weights_file`**: Path to the pre-trained model weights file (download available [https://drive.google.com/file/d/1Y9_YCJzhUPEQBDAdKVyrKplI1vpD4qiO/view?usp=sharing](#)).
 
 ### Optional Parameters:
 - **`output`**: Path to store the .npy file of segmented mask and detected bounding boxes. Default: Current working directory.
