@@ -18,6 +18,7 @@ DISSECT leverages a pre-trained deep generative model to identify cell nuclei or
 - Outputs include refined cell masks, bounding boxes, and spatial transcriptomes for downstream analyses.
 <img src="illustration_diffusion.png" width="800"/>
 <img src="illustration_segmentation.png" width="800"/>
+
 ---
 
 ## Dependencies
