@@ -88,7 +88,7 @@ mask = DISSECT.segmentation(
 - **`weights_file`**: Path to the pre-trained model weights file (download available [here](#)).
 
 ### Optional Parameters:
-- **`output'**: Path to store the .npy file of segmented mask and detected bounding boxes. Default: Current working directory.
+- **`output`**: Path to store the .npy file of segmented mask and detected bounding boxes. Default: Current working directory.
 - **`alpha` (float)**: Sets the weight of the transcriptomic gradient field in refining cell boundaries. Default: `0.5`.  
 - **`expand_by` (int)**: Number of pixels by which the bounding box is expanded outward. This ensures accurate cell boundaries without enlarging the actual cell size. Default: `5`.  
 - **`gene` (bool)**: Whether to use transcriptomics data for fine-tuning. Default: `True`.  
