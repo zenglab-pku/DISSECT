@@ -76,6 +76,8 @@ mask = DISSECT.segmentation(
     weights_file="model_weights.pth"
 )
 
+````markdown
+
 ### Parameters:
 - **`img_path`**: Path to the cytological image file.  
 - **`gene_mtx_filename`**: Path to the gene matrix file in `.csv`, `.tsv`, or `.gem` format.  
@@ -106,9 +108,9 @@ mask = DISSECT.segmentation(
 
 The output files are saved in the specified directory for downstream analysis.
 
----
 
-## Citation:
+
+### **Citation**
 If you use DISSECT in your research, please consider citing the following:
 
 **Zeng Lab**  
