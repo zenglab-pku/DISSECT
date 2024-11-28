@@ -1,6 +1,6 @@
 # DISSECT: Diffusion-based Cell Segmentation Integrating Spatial Transcriptomics
 
-![PyPI Version](https://img.shields.io/pypi/v/dissect-st)
+[![PyPI Version](https://img.shields.io/pypi/v/dissect-st)](https://pypi.org/project/dissect-st/)
 
 <img align="right" src="logo.png" width="200"/>
 
