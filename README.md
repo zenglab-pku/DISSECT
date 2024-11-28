@@ -42,6 +42,24 @@ For full dependencies, refer to the `environment.yml` file.
 ## Installation
 Currently, DISSECT supports the following installation methods:
 
+1. Create a new Conda virtual environment named `dissect`
+
+```bash
+conda create -n dissect python=3.10 -y && conda activate dissect
+```
+
+2. Install all necessary dependencies from the environment.yml file:
+
+```bash
+conda env update -f environment.yml
+```
+
+3. Clone the repository and navigate to the directory
+
+```bash
+git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
+```
+
 - **Pypi**: Coming soon.
 - **Conda**: Coming soon.
 
@@ -68,9 +86,9 @@ To use DISSECT, you need:
 ## Usage Example
 
 ```python
-import DISSECT
+from DISSECT import model
 
-mask = DISSECT.segmentation(
+mask = model.segmentation(
     img_path="example_stereseq.tif",
     platform="stereoseq",
     gene_mtx_filename="example_stereoseq.gem",
