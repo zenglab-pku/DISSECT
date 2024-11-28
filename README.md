@@ -60,7 +60,7 @@ conda env update -f environment.yml
 git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
 ```
 
-- **Pypi**: Coming soon.
+- **Pypi**: [dissect-st](https://pypi.org/project/dissect-st/).
 - **Conda**: Coming soon.
 
 ---
