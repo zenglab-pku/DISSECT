@@ -93,7 +93,7 @@ To use DISSECT, you need:
 ## Usage Example
 
 ```python
-from DISSECT import model
+import dissect
 
 mask = dissect.segmentation(
     img_path="/path/to/example_stereseq.tif",
