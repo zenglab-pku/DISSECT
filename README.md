@@ -44,19 +44,16 @@ For full dependencies, refer to the `environment.yml` file.
 ## Installation
 Currently, DISSECT supports the following installation methods:
 
-1. Create a new Conda virtual environment named `dissect`
+1. Create a new Conda virtual environment named `dissect` and install all necessary dependencies:
 
 ```bash
-conda create -n dissect python=3.10 -y && conda activate dissect
+# using conda
+conda env create -f environment.yml
+# (Optional) or using mamba
+mamba env create -f environment.yml
 ```
 
-2. Install all necessary dependencies from the environment.yml file:
-
-```bash
-conda env update -f environment.yml
-```
-
-3. Clone the repository and navigate to the directory
+2. Install DISSECT
 
 - **Pypi**: [dissect-st](https://pypi.org/project/dissect-st/). (Recommended)
 ```bash
