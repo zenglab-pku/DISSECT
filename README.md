@@ -58,14 +58,16 @@ conda env update -f environment.yml
 
 3. Clone the repository and navigate to the directory
 
-```bash
-git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
-```
-
 - **Pypi**: [dissect-st](https://pypi.org/project/dissect-st/). (Recommended)
 ```bash
 pip install dissect-st
 ```
+
+- **Git**: git clone
+```bash
+git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
+```
+
 - **Conda**: Coming soon.
 
 ---
