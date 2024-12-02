@@ -67,8 +67,8 @@ git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
 
 - **Conda**: Coming soon.
 
-3. Install DISSECT
-Download weights file of our model from (download available [https://drive.google.com/file/d/1Y9_YCJzhUPEQBDAdKVyrKplI1vpD4qiO/view?usp=sharing](#)).
+3. Download model weight file.
+Download weight file of our model from (download available [https://drive.google.com/file/d/1Y9_YCJzhUPEQBDAdKVyrKplI1vpD4qiO/view?usp=sharing](#)).
 
 ---
 
