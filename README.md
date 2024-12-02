@@ -67,6 +67,9 @@ git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
 
 - **Conda**: Coming soon.
 
+3. Install DISSECT
+Download weights file of our model from (download available [https://drive.google.com/file/d/1Y9_YCJzhUPEQBDAdKVyrKplI1vpD4qiO/view?usp=sharing](#)).
+
 ---
 
 ## Input Requirements
@@ -92,12 +95,12 @@ To use DISSECT, you need:
 ```python
 from DISSECT import model
 
-mask = model.segmentation(
-    img_path="example_stereseq.tif",
+mask = dissect.segmentation(
+    img_path="/path/to/example_stereseq.tif",
     platform="stereoseq",
-    gene_mtx_filename="example_stereoseq.gem",
-    config_file="config.yaml",
-    weights_file="model_weights.pth"
+    gene_mtx_filename="/path/to/example_stereoseq.gem",
+    config_file="/path/to/config.yaml",
+    weights_file="/path/to/model_weights.pth"
 )
 ```
 
