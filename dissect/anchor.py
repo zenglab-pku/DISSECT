@@ -489,9 +489,6 @@ class AnchorGenerator:
                 keep.append(index.item())
                 if B.numel() == 1:
                     break
-
-                # if idx % 100 == 0:
-                #     print(idx)
                 idx += 1
                 ref_x1, ref_y1, ref_x2, ref_y2 = boxes[index]
                 potential_overlap = (
@@ -708,11 +705,11 @@ class AnchorGenerator:
         Helper function to process a single patch of the image.
         """
         global MODEL
-        imgs_test = []
-        self.imgs_test = imgs_test
+        self.imgs_test = []
         for cell in args:
             x_1, x_2, y_1, y_2 = cell[:4]
-            self.imgs_test.append(self.img_cell[x_1:x_2, y_1:y_2])
+            img = self.img_cell[x_1:x_2, y_1:y_2]
+            self.imgs_test.append(img)
         MODEL = self.model
         args = np.array(
             [
@@ -772,12 +769,22 @@ class AnchorGenerator:
         Extract bounding boxes from a large image by processing it in smaller patches.
         """
         time_start = time.time()
+        self.stride = stride
         edge = ratio_stride * stride
+        self.edge = edge
         height, width = self.img_cell.shape[:2]
 
         if (height >= 512) and (width >= 512):
-            x_ref = np.array([min(i, height) for i in range(0, height + stride, stride)])
-            y_ref = np.array([min(i, width) for i in range(0, width + stride, stride)])
+            x_ref = [min(i, height) for i in range(0, height, stride)]
+            x_ref1 = x_ref[:-(ratio_stride)]
+            x_ref1.append(height - ratio_stride * stride)
+            x_ref2 = x_ref[ratio_stride:]
+            x_ref2.append(height)
+            y_ref = [min(i, width) for i in range(0, width, stride)]
+            y_ref1 = y_ref[:-(ratio_stride)]
+            y_ref1.append(width - ratio_stride * stride)
+            y_ref2 = y_ref[ratio_stride:]
+            y_ref2.append(width)
             tasks = [
                 (x_1, x_2, y_1, y_2)
                 for x_1, x_2 in zip(x_ref[:-(ratio_stride)], x_ref[ratio_stride:])
