@@ -25,7 +25,7 @@ def parallel_gm(img_cell, cell_box, index, gene_mtx, kernel, alpha, expand_by, g
     return non_zero_positions
 
 np.seterr(invalid='ignore', divide='ignore')
-def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_file, output="./results", alpha=0.5, expand_by=5, gene=True, random_seed=2024, 
+def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_file, output="./results", alpha=0.5, expand_by=5, gene=True, random_seed=2024, n_jobs=16,
                  num_proposals=1200, isslice=False, x0=None, y0=None, length=None, width=None, threshold=-0.20, cell_area=600, fov=None):
 
     set_seed(random_seed)
@@ -54,7 +54,7 @@ def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_fil
     anchors = AnchorGenerator(
         img_cell=img_test, model=model, threshold=threshold, batch_size=4, cell_area=cell_area
     )
-    boxes_test, scores = anchors.process(stride=128, ratio_stride=3, n_jobs=32, output=output)
+    boxes_test, scores = anchors.process(stride=128, ratio_stride=3, n_jobs=n_jobs, output=output)
     scores = scores.numpy()
     kernel = create_kernel(3)
 
@@ -63,7 +63,7 @@ def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_fil
     # area_test = (boxes_test[:, 2] - boxes_test[:, 0]) * (boxes_test[:, 3] - boxes_test[:, 1])
     sorted_indices_test = np.argsort(scores)[::-1].copy()
     boxes_sorted_test = boxes_test[sorted_indices_test]
-    results = Parallel(n_jobs=32)(delayed(parallel_gm)(img_test, box, idx, gene_sparse_test, kernel, alpha, expand_by, gene) for idx, box in tqdm(enumerate(boxes_sorted_test), total=boxes_sorted_test.shape[0], desc="Processing boxes"))
+    results = Parallel(n_jobs=n_jobs)(delayed(parallel_gm)(img_test, box, idx, gene_sparse_test, kernel, alpha, expand_by, gene) for idx, box in tqdm(enumerate(boxes_sorted_test), total=boxes_sorted_test.shape[0], desc="Processing boxes"))
     mask = np.zeros_like(img_test, dtype=np.int32)
     for value, position in tqdm(enumerate(results)):
         if position[0] is not None and len(position[0].shape) == 2:
