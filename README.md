@@ -64,7 +64,13 @@ For example, the default installation for Linux with CUDA 12.4:
 pip3 install torch torchvision torchaudio
 ```
 
-3. Install DISSECT
+3. Install detectron2
+```bash
+git clone https://github.com/facebookresearch/detectron2.git
+python -m pip install -e detectron2
+```
+
+4. Install DISSECT
 
 - **Pypi**: [dissect-st](https://pypi.org/project/dissect-st/). (Recommended)
 ```bash
@@ -78,7 +84,7 @@ git clone https://github.com/zenglab-pku/DISSECT.git && cd DISSECT
 
 - **Conda**: Coming soon.
 
-4. Download model weight file.
+5. Download model weight file.
 Download weight file of our model from (download available [https://drive.google.com/file/d/1Y9_YCJzhUPEQBDAdKVyrKplI1vpD4qiO/view?usp=sharing](#)).
 
 ---
