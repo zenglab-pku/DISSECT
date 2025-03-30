@@ -53,6 +53,11 @@ conda env create -f environment.yml
 mamba env create -f environment.yml
 ```
 
+Then, you can activate 'dissect' virtual environment by
+```bash
+conda activate dissect
+```
+
 2. According to your operating system (Linux, Windows, Mac) and CUDA version, please visit the official PyTorch installation guide and select the appropriate version.
 For example, the default installation for Linux with CUDA 12.4:
 ```bash
