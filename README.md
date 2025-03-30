@@ -147,7 +147,7 @@ mask = dissect.segmentation(
 ### Outputs:
 - **Cell Masks**: The model generates refined cell masks and saves them as a NumPy `.npy` file.
 - **Bounding Boxes**: Detected cell bounding boxes are saved in a `.csv` file, allowing for further custom parameter adjustments.
-- **Spatial Transcriptomes**: Outputs reconstructed spatial single-cell transcriptomes.
+- **Spatial Transcriptome**: Outputs reconstructed spatial single-cell transcriptome.
 
 The output files are saved in the specified directory for downstream analysis.
 
