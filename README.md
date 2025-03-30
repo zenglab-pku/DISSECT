@@ -59,9 +59,9 @@ conda activate dissect
 ```
 
 2. According to your operating system (Linux, Windows, Mac) and CUDA version, please visit the official PyTorch installation guide and select the appropriate version.
-For example, the default installation for Linux with CUDA 12.4:
+For example, the default installation for Linux with CUDA 12.1:
 ```bash
-pip3 install torch torchvision torchaudio
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
 3. Install detectron2
