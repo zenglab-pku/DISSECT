@@ -158,4 +158,4 @@ The output files are saved in the specified directory for downstream analysis.
 If you use DISSECT in your research, please consider citing the following:
 
 **Zeng Lab**  
-_Dissection of Spatial Transcriptomics with Cytological Imaging Integration_  
+_DISSECT integrates cytological images and spatial transcriptomics for cell segmentation_  
