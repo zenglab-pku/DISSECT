@@ -128,6 +128,7 @@ mask = dissect.segmentation(
   - `"xenium"`
   - `"stereoseq"`
   - `"nanostring"`
+  - `"hd"`
 - **`config_file`**: Path to an optional YAML file for model configuration parameters.  
 - **`weights_file`**: Path to the pre-trained model weights file (download available [https://drive.google.com/file/d/1Y9_YCJzhUPEQBDAdKVyrKplI1vpD4qiO/view?usp=sharing](#)).
 
