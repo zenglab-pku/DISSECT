@@ -36,6 +36,10 @@ Below are the essential libraries required to use DISSECT:
   - `shapely`
   - `detectron2`
   - `joblib`
+  - `polars`
+  - `tifffile`
+  - `anndata`
+  - `scikit-image`
 
 For full dependencies, refer to the `environment.yml` file.
 
@@ -152,7 +156,20 @@ mask = dissect.segmentation(
 
 The output files are saved in the specified directory for downstream analysis.
 
+### Reconstruction single-cell adata format:
 
+You can use the `dissect.segmentation` function to transform from the ouput mask to adata for downstream analysis:
+
+```python
+dissect.load_cell(
+    gem_file: str, # transcriptome
+    image_file: str,
+    mask_file: int,
+    library_id: str,
+)
+```
+
+Currently, this function takes the transcriptomic data in .csv file format with column header 'x', 'y', 'geneID' and 'MIDCount', the image in .npy file format and the mask_file in .npy file format. We will develop a more comprehensive version of this function to support all the ST platforms.
 
 ### **Citation**
 If you use DISSECT in your research, please consider citing the following:
