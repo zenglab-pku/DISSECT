@@ -15,7 +15,7 @@ from skimage import draw
 from skimage import filters, measure, morphology
 from skimage.filters import threshold_multiotsu
 from skimage.morphology import convex_hull_image
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 from shapely.validation import make_valid
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
@@ -248,7 +248,9 @@ def gradient_map(
     displacement=0.0001, 
     threshold=None,
     block_size=61,
-    min_size=None):
+    min_size=None,
+    neighbor=8
+):
     
     img_slice, gradient_map, gene_dense, new_box = compute_gradient_map(img_cell=img_cell, cell_box=cell_box, gene_mtx=gene_mtx, alpha=0.5, expand_by=expand_by, gene=gene)
     
@@ -257,19 +259,29 @@ def gradient_map(
         kernel = kernel[:, :, np.newaxis]
         gene_weights = convolve(gene_dense, kernel, mode="constant", cval=0)
 
-
-        gene_gradient_js = np.zeros((gene_dense.shape[0], gene_dense.shape[1], 8))
+        if neighbor == 4:
+            gene_gradient_js = np.zeros((gene_dense.shape[0], gene_dense.shape[1], 4))
+        else:
+            gene_gradient_js = np.zeros((gene_dense.shape[0], gene_dense.shape[1], 8))
 
         for i in range(8):
-            # Compute the outputs for two consecutive directions
-            pk = shift_and_weight(gene_dense, gene_weights, i)
-            qk = shift_and_weight(gene_dense, gene_weights, (i + 1) % 8)
 
-            # Compute Jensen-Shannon divergence
-            js_divergence = scipy.spatial.distance.jensenshannon(pk, qk, axis=2)
+            if neighbor == 4:
+            
+                if i % 2 == 0:
+                    continue
+            
+                pk = shift_and_weight(gene_dense, gene_weights, i)
+                qk = shift_and_weight(gene_dense, gene_weights, (i + 1) % 8)
+                js_divergence = scipy.spatial.distance.jensenshannon(pk, qk, axis=2)
+                gene_gradient_js[:, :, int(i // 2)] = js_divergence
+                
+            else:
+                pk = shift_and_weight(gene_dense, gene_weights, i)
+                qk = shift_and_weight(gene_dense, gene_weights, (i + 1) % 8)
+                js_divergence = scipy.spatial.distance.jensenshannon(pk, qk, axis=2)
+                gene_gradient_js[:, :, i] = js_divergence
 
-            # Store the result
-            gene_gradient_js[:, :, i] = js_divergence
 
         gene_gradient_js = np.nan_to_num(1 / (gene_gradient_js + 1e-8))
         gradient_map = np.concatenate([gradient_map, gene_gradient_js], axis=2)
@@ -280,10 +292,13 @@ def gradient_map(
     del qk
     del js_divergence
     del gene_dense
-    
-    
-    x_direc = {0: -1, 1: 0, 2: 1, 3: 1, 4: 1, 5: 0, 6: -1, 7: -1}
-    y_direc = {0: 1, 1: 1, 2: 1, 3: 0, 4: -1, 5: -1, 6: -1, 7: 0}
+
+    if neighbor == 4:
+        x_direc = {0: 0, 1: 1, 2: 0, 3: -1}
+        y_direc = {0: 1, 1: 0, 2: -1, 3: 0}
+    else:
+        x_direc = {0: -1, 1: 0, 2: 1, 3: 1, 4: 1, 5: 0, 6: -1, 7: -1}
+        y_direc = {0: 1, 1: 1, 2: 1, 3: 0, 4: -1, 5: -1, 6: -1, 7: 0}
     
     max_x = np.sum(np.array([(gradient_map[:, :, i]) * x_direc[i] for i in x_direc.keys()]), axis=0,)
     max_y = np.sum(np.array([(gradient_map[:, :, i]) * y_direc[i] for i in y_direc.keys()]), axis=0,)
@@ -467,7 +482,7 @@ def compute_bounding_box(polygon):
     """
     return polygon.bounds  # Returns (minx, miny, maxx, maxy)
 
-def bounding_box_intersects(box1, box2):
+def bbox_intersects(box1, box2):
     """
     Check if two bounding boxes intersect.
     """
@@ -477,26 +492,6 @@ def bounding_box_intersects(box1, box2):
         box1[3] < box2[1] or  # The bottom boundary of box1 is above the top boundary of box2
         box1[1] > box2[3]     # The top boundary of box1 is below the bottom boundary of box2
     )
-
-def check_and_merge(label, poly, polygons):
-    """
-    Check and merge polygons with inclusion relationships.
-    """
-    to_merge = [poly]
-    used_labels = set()
-    for other_label, other_poly in polygons.items():
-        if other_label == label or other_label in used_labels:
-            continue
-        box1 = compute_bounding_box(poly)
-        box2 = compute_bounding_box(other_poly)
-        if bounding_box_intersects(box1, box2):  # Rough screening
-            if other_poly.within(poly):  # Precise inclusion check
-                to_merge.append(other_poly)
-                used_labels.add(other_label)
-            elif poly.within(other_poly):
-                to_merge.append(other_poly)
-                used_labels.add(label)
-    return unary_union(to_merge)
 
 def refine_mask_parallel(mask, n_jobs):
     """
@@ -510,19 +505,90 @@ def refine_mask_parallel(mask, n_jobs):
     """
     refined_mask = np.zeros_like(mask, dtype=np.int32)
     unique_labels = np.unique(mask)
-    unique_labels = unique_labels[unique_labels != 0]  # Exclude background
+    unique_labels = unique_labels[unique_labels != 0] 
 
-    # Store each object's pixels as polygons
+    """        
+    加入开始
+    """
     polygons = {}
     for label in unique_labels:
-        coords = np.column_stack(np.where(mask == label))  # Get pixel coordinates
-        polygons[label] = Polygon(coords)
+        if label == 0:
+            continue
+        inst = (mask == label).astype(np.uint8)
+        contours = measure.find_contours(inst, level=0.5)
+        if not contours:
+            continue
+        cnt = max(contours, key=lambda c: c.shape[0])
+        poly = Polygon(np.fliplr(cnt))
+        if not poly.is_valid:
+            try:
+                poly = make_valid(poly)
+            except Exception:
+                poly = poly.buffer(0)
+        if poly.is_empty:
+            continue
+        polygons[label] = poly
+    labels = list(polygons.keys())
+    polys  = [polygons[l] for l in labels]
+    merged_list = []
+    used = set()
 
-    # Parallel processing for inclusion and merging
-    merged_polygons = Parallel(n_jobs=n_jobs)(
-        delayed(check_and_merge)(label, poly, polygons) for label, poly in polygons.items()
-    )
+    for i, pi in enumerate(polys):
+        if i in used or pi.is_empty:
+            continue
+        to_union = [pi]
+        bi = pi.bounds
+        for j, pj in enumerate(polys):
+            if j == i or j in used or pj.is_empty:
+                continue
+            if not bbox_intersects(bi, pj.bounds):
+                continue
+            try:
+                rel = pj.within(pi) or pi.covers(pj) or pi.within(pj) or pj.covers(pi)
+            except Exception:
+                try:
+                    pi_fix = make_valid(pi)
+                except Exception:
+                    pi_fix = pi.buffer(0)
+                try:
+                    pj_fix = make_valid(pj)
+                except Exception:
+                    pj_fix = pj.buffer(0)
+                rel = pj_fix.within(pi_fix) or pi_fix.covers(pj_fix) or pi_fix.within(pj_fix) or pj_fix.covers(pi_fix)
 
+            if rel:
+                to_union.append(pj)
+                used.add(j)
+
+        try:
+            merged = unary_union(to_union)
+        except Exception:
+            merged = unary_union([p.buffer(0) for p in to_union])
+
+        if not merged.is_empty:
+            merged_list.append(merged)
+        used.add(i)
+
+    merged_geom = unary_union(merged_list) if merged_list else None
+    
+    merged_polygons = []
+    if merged_geom is None or isinstance(merged_geom, GeometryCollection) and merged_geom.is_empty:
+        merged_polygons = []
+    else:
+        if isinstance(merged_geom, Polygon):
+            merged_polygons = [merged_geom]
+        elif isinstance(merged_geom, MultiPolygon):
+            merged_polygons = list(merged_geom.geoms)
+        else:
+            try:
+                merged_polygons = [g for g in merged_geom.geoms if isinstance(g, Polygon) and not g.is_empty]
+            except Exception:
+                merged_polygons = []
+    
+    """        
+    加入结束
+    """
+    
     # Smooth and generate the new mask
     for i, merged_poly in enumerate(merged_polygons, start=1):
         if not merged_poly.is_empty:

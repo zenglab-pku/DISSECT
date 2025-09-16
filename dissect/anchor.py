@@ -94,18 +94,18 @@ class ModelGenerator:
     Class to handle model building, loading, and other related tasks.
     """
 
-    def __init__(self, config_file, weights_file, num_proposals):
+    def __init__(self, config_file, weights_file, num_proposals=None, sample_step=None, renewal_thres=None):
         """
         Initialize the ModelHandler with a configuration file.
 
         Args:
         - config_file (str): Path to the configuration file.
         """
-        self.cfg = self.setup(config_file, num_proposals)
+        self.cfg = self.setup(config_file, num_proposals, sample_step, renewal_thres)
         self.weights = weights_file
         self.model = self._build_model()
 
-    def setup(self, config_file, num_proposals):
+    def setup(self, config_file, num_proposals, sample_step, renewal_thres):
         """
         Set up the configuration for the model.
 
@@ -116,7 +116,7 @@ class ModelGenerator:
         - cfg: Configuration object.
         """
         cfg = get_cfg()
-        add_DISSECT_config(cfg)
+        add_DISSECT_config(cfg, num_proposals=num_proposals, sample_step=sample_step,renewal_thres=renewal_thres)
         add_model_ema_configs(cfg)
         cfg.merge_from_file(config_file)
         cfg.MODEL.DEVICE = "cpu"
@@ -237,14 +237,14 @@ class RegionExtractor:
         max_y = min(self.img.shape[0] - 1, min_y + width)
 
         # Slice the region from the matrix
-        img_cell = self.img[min_y:max_y, min_x:max_x]
+        img_cell = self.img[min_y:max_y + 1, min_x:max_x + 1]
 
         # Filter gene_df for genes within the defined region
         region_genes = self.gene_df[
             (self.gene_df["x"] >= min_x)
-            & (self.gene_df["x"] < max_x)
+            & (self.gene_df["x"] <= max_x)
             & (self.gene_df["y"] >= min_y)
-            & (self.gene_df["y"] < max_y)
+            & (self.gene_df["y"] <= max_y)
         ].copy()
 
         # Adjust gene coordinates to synchronize with the sliced region
@@ -274,13 +274,13 @@ class RegionExtractor:
         end_y = start_y + region_size
 
         img_cell = self.img[
-            start_x : start_x + region_size, start_y : start_y + region_size
+            start_x : start_x + region_size + 1, start_y : start_y + region_size + 1
         ]
         cp_seg_cell = self.cp_seg[
-            start_x : start_x + region_size, start_y : start_y + region_size
+            start_x : start_x + region_size + 1, start_y : start_y + region_size + 1
         ]
         mtx_cell = self.matrix[
-            start_x : start_x + region_size, start_y : start_y + region_size
+            start_x : start_x + region_size + 1, start_y : start_y + region_size + 1
         ]
 
         # Filter gene_df for genes within the defined region
@@ -417,7 +417,7 @@ class AnchorGenerator:
         edge_margin=3,
         repetition=2,
         batch_size=8,
-        cell_area=350,
+        minarea=350,
         maxarea=1600,
         
     ):
@@ -428,7 +428,7 @@ class AnchorGenerator:
         self.repetition = repetition
         self.batch_size = batch_size
         self.model.to("cpu")
-        self.area = cell_area
+        self.minarea = minarea
         self.maxarea = maxarea
 
     def NMS(self, boxes, scores, iou_thres, is_cuda=False, GIoU=False, DIoU=False, CIoU=False):
@@ -686,7 +686,7 @@ class AnchorGenerator:
             else:
                 mean_threshold = 30
             mean_threshold = mean_threshold if mean_threshold >= 25 else 25
-            valid_indices = (area >= self.area) & (meanp > mean_threshold) & (area < self.maxarea) & ~(torch.isnan(boxes).any(dim=1))
+            valid_indices = (area >= self.minarea) & (meanp > mean_threshold) & (area < self.maxarea) & ~(torch.isnan(boxes).any(dim=1))
 
             scores = scores[valid_indices]
             boxes = boxes[valid_indices]
@@ -773,28 +773,29 @@ class AnchorGenerator:
         edge = ratio_stride * stride
         self.edge = edge
         height, width = self.img_cell.shape[:2]
+        win = ratio_stride * stride
 
-        if (height >= 512) and (width >= 512):
-            x_ref = [min(i, height) for i in range(0, height, stride)]
-            x_ref1 = x_ref[:-(ratio_stride)]
-            x_ref1.append(height - ratio_stride * stride)
-            x_ref2 = x_ref[ratio_stride:]
-            x_ref2.append(height)
-            y_ref = [min(i, width) for i in range(0, width, stride)]
-            y_ref1 = y_ref[:-(ratio_stride)]
-            y_ref1.append(width - ratio_stride * stride)
-            y_ref2 = y_ref[ratio_stride:]
-            y_ref2.append(width)
-            tasks = [
-                (x_1, x_2, y_1, y_2)
-                for x_1, x_2 in zip(x_ref[:-(ratio_stride)], x_ref[ratio_stride:])
-                for y_1, y_2 in zip(y_ref[:-(ratio_stride)], y_ref[ratio_stride:])
-            ]
+        if (height >= win) or (width >= win):
+            
+            def axis_starts(L, win, stride):
+                # 轴向起点：常规等步长滑动 + 末尾补一个使窗口恰好贴边
+                if L <= win:
+                    return [0]                      # 一张就够
+                starts = list(range(0, L - win + 1, stride))
+                if starts[-1] != L - win:
+                    starts.append(L - win)          # 保证最后一个窗口右/下边界贴齐图像边
+                return starts
+            
+            xs = axis_starts(height, win, stride)
+            ys = axis_starts(width,  win, stride)
+            
+            # 生成 [x1, x2), [y1, y2) 区间（x2/y2 不会超过边界）
+            tasks = [(x1, min(x1 + win, height), y1, min(y1 + win, width)) for x1 in xs for y1 in ys]
         else:
             tasks = [
                 (0, width, 0, height)
             ]
-        
+
         if len(tasks) > self.batch_size:
             batched_tasks = [
                 tasks[i : i + self.batch_size]

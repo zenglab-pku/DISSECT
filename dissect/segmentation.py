@@ -20,16 +20,19 @@ from .finetune import gradient_map, create_kernel, refine_mask_parallel
 
 os.environ["IOPATH_DISABLE_TELEMETRY"] = "1"
 
-def parallel_gm(img_cell, cell_box, index, gene_mtx, kernel, alpha, expand_by, gene):
-    non_zero_positions = gradient_map(img_cell=img_cell, cell_box=cell_box, index=index, gene_mtx=gene_mtx, kernel=kernel, alpha=alpha, expand_by=expand_by, gene=gene)
+def parallel_gm(img_cell, cell_box, index, gene_mtx, kernel, alpha, expand_by, gene, neighbor):
+    non_zero_positions = gradient_map(img_cell=img_cell, cell_box=cell_box, index=index, gene_mtx=gene_mtx, kernel=kernel, alpha=alpha, expand_by=expand_by, gene=gene, neighbor=neighbor)
     return non_zero_positions
 
 np.seterr(invalid='ignore', divide='ignore')
-def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_file, output="./results", alpha=0.5, expand_by=5, gene=True, random_seed=2024, n_jobs=16,
-                 num_proposals=1200, isslice=False, x0=None, y0=None, length=None, width=None, threshold=-0.20, cell_area=600, fov=None):
+def segmentation(
+    img_path, platform, gene_mtx_filename, config_file, weights_file, output="./results", alpha=0.5, expand_by=5, gene=True, random_seed=2024, n_jobs=16, 
+    num_proposals=None, sample_step=None, renewal_thres=None, isslice=False, x0=None, y0=None, length=None, width=None, threshold=-0.20, minarea=600, 
+    maxarea=1200, fov=None, stride=128, ratio_stride=3, neighbor=8
+):
 
     set_seed(random_seed)
-    model = ModelGenerator(config_file, weights_file, num_proposals).model
+    model = ModelGenerator(config_file, weights_file, num_proposals, sample_step, renewal_thres).model
 
     st_data = STReader(platform, img_path, gene_mtx_filename, fov=fov)
 
@@ -42,8 +45,8 @@ def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_fil
     
     if isslice == False:
         x0, y0 = 0, 0
-        length = int(img_test.shape[0] / 128) * 128
-        width = int(img_test.shape[1] / 128) * 128
+        length = img_test.shape[0]
+        width = img_test.shape[1]
     else:
         assert (x0 != None) & (y0 != None) & (length != None) & (x0 != None)
         
@@ -52,25 +55,23 @@ def segmentation(img_path, platform, gene_mtx_filename, config_file, weights_fil
     )
 
     anchors = AnchorGenerator(
-        img_cell=img_test, model=model, threshold=threshold, batch_size=4, cell_area=cell_area
+        img_cell=img_test, model=model, threshold=threshold, batch_size=4, minarea=minarea, maxarea=maxarea
     )
-    boxes_test, scores = anchors.process(stride=128, ratio_stride=3, n_jobs=n_jobs, output=output)
+    boxes_test, scores = anchors.process(stride=stride, ratio_stride=ratio_stride, n_jobs=n_jobs, output=output)
     scores = scores.numpy()
     kernel = create_kernel(3)
 
     gene_df_test["gene_idx"] = gene_df_test['geneID'].map({gene_name: idx for idx, gene_name in enumerate(set(gene_df_test['geneID']))})
     gene_sparse_test = gene_df_test[["gene_idx", "x", "y", "MIDCount"]].values.astype(np.int32)
-    # area_test = (boxes_test[:, 2] - boxes_test[:, 0]) * (boxes_test[:, 3] - boxes_test[:, 1])
     sorted_indices_test = np.argsort(scores)[::-1].copy()
     boxes_sorted_test = boxes_test[sorted_indices_test]
-    results = Parallel(n_jobs=n_jobs)(delayed(parallel_gm)(img_test, box, idx, gene_sparse_test, kernel, alpha, expand_by, gene) for idx, box in tqdm(enumerate(boxes_sorted_test), total=boxes_sorted_test.shape[0], desc="Processing boxes"))
+    results = Parallel(n_jobs=n_jobs)(delayed(parallel_gm)(img_test, box, idx, gene_sparse_test, kernel, alpha, expand_by, gene, neighbor) for idx, box in tqdm(enumerate(boxes_sorted_test), total=boxes_sorted_test.shape[0], desc="Processing boxes"))
     mask = np.zeros_like(img_test, dtype=np.int32)
     for value, position in tqdm(enumerate(results)):
         if position[0] is not None and len(position[0].shape) == 2:
             for y, x in position[0]:
                 mask[y, x] = value
-    refined_mask = refine_mask_parallel(mask, n_jobs=8)
-    np.save(os.path.join(output, "mask.npy"), refined_mask)
+    np.save(os.path.join(output, "mask.npy"), mask)
     return mask
     
 class STReader:
@@ -81,7 +82,7 @@ class STReader:
         gene_mtx_filename: Union[str, Path],
         fov: int = None
     ):
-        valid_platforms = ['stereoseq', 'xenium', 'nanostring']
+        valid_platforms = ['stereoseq', 'xenium', 'nanostring', 'hd']
         if platform not in valid_platforms:
             raise ValueError(f"Invalid platform '{platform}'. Must be one of {valid_platforms}.")
 
@@ -93,29 +94,32 @@ class STReader:
 
     def load_st(self) -> Tuple[np.ndarray, pd.DataFrame]:
 
-        try:
-            img = io.imread(self.img_path)
-
-            img = img / np.max(img) * 256
-            if len(img.shape) == 3:
-                img = img[:, :, 0]
-        except Exception as e:
+        if type(self.img_path) == np.ndarray:
+            img = self.img_path
+        else:
             try:
-                img = tiff.TiffReader(self.img_path).pages[0].asarray()
-            except Exception as e:    
-                raise RuntimeError(
-                    f"Error occurred while reading the image from {self.img_path}: {str(e)}"
-                )
-
-        if self.platform == 'stereoseq':
-            df = self._load_gene_mtx_stereoseq()
-        elif self.platform == 'xenium':
-            df = self._load_gene_mtx_xenium()
-        elif self.platform == 'nanostring':
-            df = self._load_gene_mtx_nanostring()
+                img = io.imread(self.img_path)
+                img = img / np.max(img) * 256
+                if len(img.shape) == 3:
+                    img = img[:, :, 0]
+            except Exception as e:
+                try:
+                    img = tiff.TiffReader(self.img_path).pages[0].asarray()
+                except Exception as e:    
+                    raise RuntimeError(
+                        f"Error occurred while reading the image from {self.img_path}: {str(e)}"
+                    )
+        if type(self.gene_mtx_filename) == pd.core.frame.DataFrame:
+            df = self.gene_mtx_filename
+        else:
+            if self.platform == 'stereoseq':
+                df = self._load_gene_mtx_stereoseq()
+            elif self.platform == 'xenium':
+                df = self._load_gene_mtx_xenium()
+            elif self.platform == 'nanostring':
+                df = self._load_gene_mtx_nanostring()
             
         print("Successfuly read in your ST data.")
-        print(f"image shape of {img.shape} vs. gene matrix shape of {df['y'].max() - df['y'].min(), df['x'].max() - df['x'].min()}")
 
         return img, df
 

@@ -6,13 +6,23 @@ Copyright Zexian Zeng's lab, AAIS, Peking Universit. All Rights Reserved
 
 from detectron2.config import CfgNode as CN
 
-def add_DISSECT_config(cfg):
+def add_DISSECT_config(
+    cfg, num_proposals=None, sample_step=None,
+    renewal_thres=None
+):
     """
     Add config for DISSECT
     """
     cfg.MODEL.DISSECT = CN()
     cfg.MODEL.DISSECT.NUM_CLASSES = 80
-    cfg.MODEL.DISSECT.NUM_PROPOSALS = 500
+    if num_proposals == None:
+        cfg.MODEL.DISSECT.NUM_PROPOSALS = 500
+    else:
+        cfg.MODEL.DISSECT.NUM_PROPOSALS = num_proposals
+    if renewal_thres == None:
+        cfg.MODEL.DISSECT.RENEWAL_THRESHOLD = 0.5
+    else:
+        cfg.MODEL.DISSECT.RENEWAL_THRESHOLD = renewal_thres
 
     # RCNN Head.
     cfg.MODEL.DISSECT.NHEADS = 8
@@ -47,7 +57,10 @@ def add_DISSECT_config(cfg):
 
     # Diffusion
     cfg.MODEL.DISSECT.SNR_SCALE = 2.0
-    cfg.MODEL.DISSECT.SAMPLE_STEP = 1
+    if sample_step == None:
+        cfg.MODEL.DISSECT.SAMPLE_STEP = 1
+    else:
+        cfg.MODEL.DISSECT.SAMPLE_STEP = sample_step
 
     # Inference
     cfg.MODEL.DISSECT.USE_NMS = True

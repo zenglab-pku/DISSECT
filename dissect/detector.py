@@ -215,6 +215,7 @@ class DISSECT(nn.Module):
         self.self_condition = False
         self.scale = cfg.MODEL.DISSECT.SNR_SCALE
         self.box_renewal = True
+        self.box_renweal_thres = cfg.MODEL.DISSECT.RENEWAL_THRESHOLD
         self.use_ensemble = True
 
         self.register_buffer('betas', betas)
@@ -283,17 +284,15 @@ class DISSECT(nn.Module):
                 (extract(self.sqrt_recip_alphas_cumprod, t, x_t.shape) * x_t - x0) /
                 extract(self.sqrt_recipm1_alphas_cumprod, t, x_t.shape)
         )
-        torch.nn. DataParallel
+        torch.nn.DataParallel
     def model_predictions(self, backbone_feats, images_whwh, x, t, x_self_cond=None, clip_x_start=False):
         x_boxes = torch.clamp(x, min=-1 * self.scale, max=self.scale)
         x_boxes = ((x_boxes / self.scale) + 1) / 2
         x_boxes = box_cxcywh_to_xyxy(x_boxes)
         x_boxes = x_boxes * images_whwh[:, None, :]
-        #import pdb;pdb.set_trace()
         outputs_class, outputs_coord,outputs_kernel,mask_feat = self.head(backbone_feats, x_boxes, t, None)
         
-        #torch.Size([6, 1, 500, 80]), torch.Size([6, 1, 500, 153]), torch.Size([1, 8, 200, 304])
-        x_start = outputs_coord[-1]  # (batch, num_proposals, 4) predict boxes: absolute coordinates (x1, y1, x2, y2)
+        x_start = outputs_coord[-1]
         x_start = x_start / images_whwh[:, None, :]
         x_start = box_xyxy_to_cxcywh(x_start)
         x_start = (x_start * 2 - 1.) * self.scale
@@ -326,10 +325,9 @@ class DISSECT(nn.Module):
             preds, outputs_class, outputs_coord,outputs_kernel,mask_feat = self.model_predictions(backbone_feats, images_whwh, img, time_cond,self_cond, clip_x_start=clip_denoised)
             pred_noise, x_start = preds.pred_noise, preds.pred_x_start
 
-            if self.box_renewal:  # filter
-                #true
+            if self.box_renewal:
                 score_per_image, box_per_image = outputs_class[-1][0], outputs_coord[-1][0]
-                threshold = 0.5
+                threshold = self.box_renweal_thres
                 score_per_image = torch.sigmoid(score_per_image)
                 value, _ = torch.max(score_per_image, -1, keepdim=False)
                 keep_idx = value > threshold
@@ -354,8 +352,7 @@ class DISSECT(nn.Module):
                   c * pred_noise + \
                   sigma * noise
 
-            if self.box_renewal:  # filter
-                # replenish with randn boxes
+            if self.box_renewal:
                 img = torch.cat((img, torch.randn(1, self.num_proposals - num_remain, 4, device=img.device)), dim=1)
             if self.use_ensemble and self.sampling_timesteps > 1:
                 box_pred_per_image, scores_per_image, labels_per_image, kernels_per_image = self.inference(outputs_class[-1],
@@ -388,14 +385,12 @@ class DISSECT(nn.Module):
                     8,
                     self.weight_nums,
                     self.bias_nums)
-            #import pdb;pdb.set_trace()
             mask_feat_head = mask_feat.repeat(1, num_instance, 1, 1)
             mask_logits = self.mask_heads_forward(
                     mask_feat_head, 
                     weights, 
                     biases, 
                     num_instance)
-                #import pdb;pdb.set_trace()
             mask_logits = mask_logits.reshape(-1, 1,mask_feat.size(2), mask_feat.size(3)).squeeze(1).sigmoid()
             
             
@@ -406,7 +401,6 @@ class DISSECT(nn.Module):
             result.pred_masks = mask_logits
             results = [result]
         else:
-            #import pdb;pdb.set_trace()
             output = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
             box_cls = output["pred_logits"]
             box_pred = output["pred_boxes"]
@@ -668,17 +662,13 @@ class DISSECT(nn.Module):
                     8,
                     self.weight_nums,
                     self.bias_nums)
-                #import pdb;pdb.set_trace()
                 mask_feat_head = mas.unsqueeze(0).repeat(1, num_instance, 1, 1)
                 mask_logits = self.mask_heads_forward(
                     mask_feat_head, 
                     weights, 
                     biases, 
                     num_instance)
-                #import pdb;pdb.set_trace()
                 mask_logits = mask_logits.reshape(-1, 1, mas.size(1), mas.size(2)).squeeze(1).sigmoid()
-                #mask_logits.gt_(0.5)
-                #mask_logits = F.interpolate(mask_logits, size=image_size, mode='bilinear').squeeze(1)
                 result.pred_boxes = Boxes(box_pred_per_image)
                 result.scores = scores_per_image
                 result.pred_classes = labels_per_image
@@ -687,7 +677,6 @@ class DISSECT(nn.Module):
 
         else:
             import pdb;pdb.set_trace()
-            # For each box we assign the best class or the second best if the best on is `no_object`.
             scores, labels = F.softmax(box_cls, dim=-1)[:, :, :-1].max(-1)
 
             for i, (scores_per_image, labels_per_image, box_pred_per_image, image_size) in enumerate(zip(
