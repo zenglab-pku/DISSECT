@@ -118,6 +118,8 @@ class STReader:
                 df = self._load_gene_mtx_xenium()
             elif self.platform == 'nanostring':
                 df = self._load_gene_mtx_nanostring()
+            elif self.platform == 'hd':
+                df = self._load_gene_mtx_stereoseq()
             
         print("Successfuly read in your ST data.")
 
