@@ -125,16 +125,26 @@ class STReader:
 
     def _load_gene_mtx_stereoseq(self) -> pd.DataFrame:
         try:
-            if self.gene_mtx_filename.endswith("gz"):
+            if self.gene_mtx_filename.endswith(".tsv.gz"):
                 try: 
                     df = pd.read_csv(self.gene_mtx_filename, sep="\t", compression="gzip")
                 except Exception as e:
                     df = pd.read_csv(self.gene_mtx_filename, sep="\t", compression="gzip", skiprows=6)
-            else:
+            elif self.gene_mtx_filename.endswith(".tsv"):
                 try: 
                     df = pd.read_csv(self.gene_mtx_filename, sep="\t")
                 except Exception as e:
                     df = pd.read_csv(self.gene_mtx_filename, sep="\t", skiprows=6)
+            elif self.gene_mtx_filename.endswith(".csv.gz"):
+                try:
+                    df = pd.read_csv(self.gene_mtx_filename, compression="gzip")
+                except Exception as e:
+                    df = pd.read_csv(self.gene_mtx_filename, compression="gzip", skiprows=6)
+            else:
+                try: 
+                    df = pd.read_csv(self.gene_mtx_filename)
+                except Exception as e:
+                    df = pd.read_csv(self.gene_mtx_filename, skiprows=6)   
         except Exception as e:
             raise RuntimeError(
                 f"Error occurred while loading the gene matrix from {self.gene_mtx_filename}: {str(e)}"
